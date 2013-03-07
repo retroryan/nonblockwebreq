@@ -2,10 +2,11 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /pause                          controllers.PausingController.pause(duration: Int)
+GET     /scala/pause                    controllers.PausingController.pause(duration: Int)
+GET     /pause                          controllers.PauseJavaApplication.pause(duration: Long, memoryFillSize: Int)
 
 GET     /java/sync                      controllers.PauseJavaApplication.sync()
-GET     /java/async/partial             controllers.PauseJavaApplication.partialAsync()
+POST     /java/async/partial             controllers.PauseJavaApplication.partialAsync()
 GET     /java/async/full                controllers.PauseJavaApplication.fullAsync()
 
 GET     /scala/sync                     controllers.PauseScalaApplication.sync()

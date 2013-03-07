@@ -30,7 +30,7 @@ public class PauseJavaApplication extends Controller {
         }
         TestParams testParams = filledTestParams.get();
 
-        String pauseCall = routes.PauseJavaApplication.pause(testParams.pauseDuration, testParams.memoryFillSize).absoluteURL(request());
+        String pauseCall = routes.PausingJavaController.pause(3).absoluteURL(request());
 
         String three = WS.url(pauseCall)
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
@@ -50,7 +50,7 @@ public class PauseJavaApplication extends Controller {
 
     // this handler occupies a thread until completed
     // three web requests run in parallel, when active they occupy a thread
-    public static Result partialAsync() {
+    public static Result partialAsyncJavaPause() {
 
         Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
         if (filledTestParams.hasErrors()) {
@@ -58,24 +58,16 @@ public class PauseJavaApplication extends Controller {
         }
         TestParams testParams = filledTestParams.get();
 
-        String pauseCall = routes.PauseJavaApplication.pause(testParams.pauseDuration, testParams.memoryFillSize).absoluteURL(request());
-
-        F.Promise<WS.Response> threePromise = WS.url(pauseCall)
-                .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
-                .setTimeout(500000)
+        F.Promise<WS.Response> threePromise = WS.url(routes.PausingJavaController.pause(3).absoluteURL(request()))
+                .setQueryParameter("duration", "3")
                 .get(); // schedule now
 
-        F.Promise<WS.Response> onePromise = WS.url(pauseCall)
-                .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
-                .setTimeout(500000)
+        F.Promise<WS.Response> onePromise = WS.url(routes.PausingJavaController.pause(1).absoluteURL(request()))
+                .setQueryParameter("duration", "1")
                 .get(); // schedule now
 
-        F.Promise<WS.Response> fourPromise = WS.url(pauseCall)
-                .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
-                .setTimeout(500000)
+        F.Promise<WS.Response> fourPromise = WS.url(routes.PausingJavaController.pause(4).absoluteURL(request()))
+                .setQueryParameter("duration", "4")
                 .get(); // schedule now
 
         // order doesn't matter
@@ -83,8 +75,43 @@ public class PauseJavaApplication extends Controller {
         String one = onePromise.get().getBody();
         String four = fourPromise.get().getBody();
 
+        String content = one + three + four;
+        System.out.println("content = " + content);
+
+        return ok(content);
+    }
+
+    // this handler occupies a thread until completed
+    // three web requests run in parallel, when active they occupy a thread
+    public static Result partialAsyncScalaPause() {
+
+        Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
+        if (filledTestParams.hasErrors()) {
+            return badRequest("Bad test params");
+        }
+        TestParams testParams = filledTestParams.get();
+
+        F.Promise<WS.Response> threePromise = WS.url(routes.PausingController.pause(3).absoluteURL(request()))
+                .setQueryParameter("duration", "3")
+                .get(); // schedule now
+        F.Promise<WS.Response> onePromise = WS.url(routes.PausingController.pause(1).absoluteURL(request()))
+                .setQueryParameter("duration", "1")
+                .get(); // schedule now
+        F.Promise<WS.Response> fourPromise = WS.url(routes.PausingController.pause(4).absoluteURL(request()))
+                .setQueryParameter("duration", "4")
+                .get(); // schedule now
+
+        // order doesn't matter
+        String three = threePromise.get().getBody();
+        String one = onePromise.get().getBody();
+        String four = fourPromise.get().getBody();
+
+        String content = one + three + four;
+        System.out.println("content = " + content);
+
         return ok(one + three + four);
     }
+
 
     // this handler only occupies a thread when active
     // three web requests run in parallel, when active the occupy a thread
@@ -95,7 +122,7 @@ public class PauseJavaApplication extends Controller {
         }
         TestParams testParams = filledTestParams.get();
 
-        String pauseCall = routes.PauseJavaApplication.pause(testParams.pauseDuration, testParams.memoryFillSize).absoluteURL(request());
+        String pauseCall = routes.PausingJavaController.pause(3).absoluteURL(request());
 
         final F.Promise<WS.Response> threePromise = WS.url(pauseCall)
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
@@ -105,7 +132,7 @@ public class PauseJavaApplication extends Controller {
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
                 .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
                 .get(); // schedule now
-        final F.Promise<WS.Response> fourPromise =WS.url(pauseCall)
+        final F.Promise<WS.Response> fourPromise = WS.url(pauseCall)
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
                 .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
                 .get(); // schedule now
@@ -135,41 +162,5 @@ public class PauseJavaApplication extends Controller {
         );
     }
 
-
-//    public static long fixedDuration = 1;
-
-    public static Result pause(long duration, int memoryFillSize) {
-      //  F.Promise<Result> timeout = F.Promise.timeout((Result) ok(memoryOverload(memoryFillSize)), duration);
-
-      //  return async(timeout);
-
-       return ok(memoryOverload(memoryFillSize));
-    }
-
-    public static String memoryOverload(int memoryFillSize) {
-        Map<String, String> mapContainer = new HashMap<String, String>();
-
-        String stringFiller = "stringFiller";
-        String largeString = "start";
-
-        for (int indx = 0; indx < memoryFillSize; indx++) {
-            String newStringData = stringFiller + indx;
-            largeString += newStringData;
-            mapContainer.put(newStringData, newStringData);
-            mapContainer.put(String.valueOf(indx), largeString);
-        }
-
-        String mapSize = String.valueOf(mapContainer.size());
-        System.out.println("map size = " + mapSize);
-
-        for (int indx = 0; indx < memoryFillSize; indx++) {
-            String newStringData = stringFiller + indx;
-            mapContainer.remove(newStringData);
-            mapContainer.remove(indx);
-        }
-
-        mapSize = String.valueOf(mapContainer.size());
-        return mapSize;
-    }
 
 }

@@ -163,4 +163,42 @@ public class PauseJavaApplication extends Controller {
     }
 
 
+    // this handler occupies a thread until completed
+    // three web requests run in parallel, when active they occupy a thread
+    public static Result partialAsyncSeparateJavaHost() {
+
+        Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
+        if (filledTestParams.hasErrors()) {
+            return badRequest("Bad test params");
+        }
+        TestParams testParams = filledTestParams.get();
+
+        Call pauseCall = routes.PausingJavaController.pause(3);
+
+        String url = "http://localhost:9999" + pauseCall.url();
+
+        F.Promise<WS.Response> threePromise = WS.url(url)
+                .setQueryParameter("duration", "3")
+                .get(); // schedule now
+
+        F.Promise<WS.Response> onePromise = WS.url(url)
+                .setQueryParameter("duration", "1")
+                .get(); // schedule now
+
+        F.Promise<WS.Response> fourPromise = WS.url(url)
+                .setQueryParameter("duration", "4")
+                .get(); // schedule now
+
+        // order doesn't matter
+        String three = threePromise.get().getBody();
+        String one = onePromise.get().getBody();
+        String four = fourPromise.get().getBody();
+
+        String content = one + three + four;
+        System.out.println("content = " + content);
+
+        return ok(content);
+    }
+
+
 }

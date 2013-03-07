@@ -1,5 +1,6 @@
 package controllers;
 
+import play.libs.F;
 import play.mvc.Controller;
 import play.mvc.Result;
 
@@ -10,10 +11,10 @@ import java.util.Map;
 public class PausingJavaController extends Controller {
 
     public static Result pause(long duration) {
-        //F.Promise<Result> timeout = F.Promise.timeout((Result) ok(memoryOverload(memoryFillSize)), duration);
-        //return async(timeout);
+        F.Promise<Result> timeout = F.Promise.timeout((Result) ok(String.valueOf(duration)), duration);
+        return async(timeout);
 
-        return ok("no pause");
+        //return ok("java pause ");
     }
 
     public static String memoryOverload(int memoryFillSize) {

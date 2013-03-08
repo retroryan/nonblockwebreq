@@ -17,23 +17,15 @@ public class PausingJavaController extends Controller {
     public static Result pause(final long duration) {
         Logger.debug("java pausing for  " + duration + " seconds");
 
-        Callable<Long> callable = new Callable<Long>() {
-            public Long call() {
-                return duration;
+        Callable<Result> callable = new Callable<Result>() {
+            public Result call() {
+                return ok(String.valueOf(duration));
             }
         };
 
-        F.Promise<Long> promiseOfInt = Akka.timeout(callable,duration, TimeUnit.SECONDS);
+        F.Promise<Result> promiseOfInt = Akka.timeout(callable,duration, TimeUnit.SECONDS);
 
-        return async(
-                promiseOfInt.map(
-                        new F.Function<Long, Result>() {
-                            public Result apply(Long i) {
-                                return ok(i.toString());
-                            }
-                        }
-                )
-        );
+        return async(promiseOfInt);
     }
 
     public static String memoryOverload(int memoryFillSize) {

@@ -1,5 +1,6 @@
 package controllers;
 
+import org.joda.time.DateTimeUtils;
 import play.Logger;
 import play.libs.F;
 import play.mvc.Controller;
@@ -12,8 +13,9 @@ import java.util.Map;
 public class PausingJavaController extends Controller {
 
     public static Result pause(long duration) {
-        Logger.debug("java returning " + duration);
-        F.Promise<Result> timeout = F.Promise.timeout((Result) ok(String.valueOf(duration)), duration);
+        long durationSeconds = duration * 1000;
+        Logger.debug("java pausing for " + durationSeconds);
+        F.Promise<Result> timeout = F.Promise.timeout((Result) ok(String.valueOf(durationSeconds)), durationSeconds);
         return async(timeout);
     }
 

@@ -7,9 +7,8 @@ GET     /pause                          controllers.PausingJavaController.pause(
 
 GET     /java/sync                      controllers.PauseJavaApplication.sync()
 
-POST     /java/async/partialJava              controllers.PauseJavaApplication.partialAsyncJavaPause()
-POST     /java/async/partialScala             controllers.PauseJavaApplication.partialAsyncScalaPause()
-POST     /java/async/partialJavaSeparate      controllers.PauseJavaApplication.partialAsyncSeparateJavaHost()
+POST     /java/async/partialJava        controllers.PauseJavaApplication.partialAsyncJavaPause()
+POST     /java/async/partialScala       controllers.PauseJavaApplication.partialAsyncScalaPause()
 
 GET     /java/async/full                controllers.PauseJavaApplication.fullAsync()
 

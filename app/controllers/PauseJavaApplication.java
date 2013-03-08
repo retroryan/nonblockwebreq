@@ -58,27 +58,10 @@ public class PauseJavaApplication extends Controller {
         }
         TestParams testParams = filledTestParams.get();
 
-        F.Promise<WS.Response> threePromise = WS.url(routes.PausingJavaController.pause(3).absoluteURL(request()))
-                .setQueryParameter("duration", "3")
-                .get(); // schedule now
+        Call pauseCall = routes.PausingJavaController.pause(testParams.pauseDuration);
+        String url = "http://" + testParams.host + pauseCall.url();
 
-        F.Promise<WS.Response> onePromise = WS.url(routes.PausingJavaController.pause(1).absoluteURL(request()))
-                .setQueryParameter("duration", "1")
-                .get(); // schedule now
-
-        F.Promise<WS.Response> fourPromise = WS.url(routes.PausingJavaController.pause(4).absoluteURL(request()))
-                .setQueryParameter("duration", "4")
-                .get(); // schedule now
-
-        // order doesn't matter
-        String three = threePromise.get().getBody();
-        String one = onePromise.get().getBody();
-        String four = fourPromise.get().getBody();
-
-        String content = one + three + four;
-        System.out.println("content = " + content);
-
-        return ok(content);
+        return getPartialAsyncResult(url);
     }
 
     // this handler occupies a thread until completed
@@ -91,13 +74,23 @@ public class PauseJavaApplication extends Controller {
         }
         TestParams testParams = filledTestParams.get();
 
-        F.Promise<WS.Response> threePromise = WS.url(routes.PausingController.pause(3).absoluteURL(request()))
+        Call pauseCall = routes.PausingController.pause(testParams.pauseDuration);
+        String url = "http://" + testParams.host + pauseCall.url();
+
+        return getPartialAsyncResult(url);
+    }
+
+
+    private static Result getPartialAsyncResult(String url) {
+        F.Promise<WS.Response> threePromise = WS.url(url)
                 .setQueryParameter("duration", "3")
                 .get(); // schedule now
-        F.Promise<WS.Response> onePromise = WS.url(routes.PausingController.pause(1).absoluteURL(request()))
+
+        F.Promise<WS.Response> onePromise = WS.url(url)
                 .setQueryParameter("duration", "1")
                 .get(); // schedule now
-        F.Promise<WS.Response> fourPromise = WS.url(routes.PausingController.pause(4).absoluteURL(request()))
+
+        F.Promise<WS.Response> fourPromise = WS.url(url)
                 .setQueryParameter("duration", "4")
                 .get(); // schedule now
 
@@ -109,7 +102,7 @@ public class PauseJavaApplication extends Controller {
         String content = one + three + four;
         System.out.println("content = " + content);
 
-        return ok(one + three + four);
+        return ok(content);
     }
 
 
@@ -160,44 +153,6 @@ public class PauseJavaApplication extends Controller {
 
                 )
         );
-    }
-
-
-    // this handler occupies a thread until completed
-    // three web requests run in parallel, when active they occupy a thread
-    public static Result partialAsyncSeparateJavaHost() {
-
-        Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
-        if (filledTestParams.hasErrors()) {
-            return badRequest("Bad test params");
-        }
-        TestParams testParams = filledTestParams.get();
-
-        Call pauseCall = routes.PausingJavaController.pause(3);
-
-        String url = "http://localhost:9999" + pauseCall.url();
-
-        F.Promise<WS.Response> threePromise = WS.url(url)
-                .setQueryParameter("duration", "3")
-                .get(); // schedule now
-
-        F.Promise<WS.Response> onePromise = WS.url(url)
-                .setQueryParameter("duration", "1")
-                .get(); // schedule now
-
-        F.Promise<WS.Response> fourPromise = WS.url(url)
-                .setQueryParameter("duration", "4")
-                .get(); // schedule now
-
-        // order doesn't matter
-        String three = threePromise.get().getBody();
-        String one = onePromise.get().getBody();
-        String four = fourPromise.get().getBody();
-
-        String content = one + three + four;
-        System.out.println("content = " + content);
-
-        return ok(content);
     }
 
 

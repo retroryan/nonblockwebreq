@@ -2,6 +2,8 @@ package models;
 
 public class TestParams {
 
-    public long pauseDuration;
+    public int pauseDuration;
     public int memoryFillSize;
+
+    public String host;
 }

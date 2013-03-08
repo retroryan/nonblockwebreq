@@ -1,21 +1,13 @@
 package controllers;
 
 import models.TestParams;
-import play.Play;
 import play.api.mvc.Call;
 import play.data.Form;
 import play.libs.F;
-import play.libs.Json;
 import play.libs.WS;
 import play.mvc.Controller;
 import play.mvc.Result;
-import play.mvc.Results;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static play.data.Form.form;
 
 public class PauseJavaApplication extends Controller {
 

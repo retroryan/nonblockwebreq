@@ -12,12 +12,7 @@ POST     /java/async/partialScala       controllers.PauseJavaApplication.partial
 
 GET     /java/async/full                controllers.PauseJavaApplication.fullAsync()
 
-GET     /scala/sync                     controllers.PauseScalaApplication.sync()
-GET     /scala/async/partial            controllers.PauseScalaApplication.partialAsync()
-GET     /scala/async/full               controllers.PauseScalaApplication.fullAsync()
-
 GET     /java/social                    controllers.SocialJavaApplication.social()
-GET     /scala/social                   controllers.SocialScalaApplication.social()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /                               controllers.Assets.at(path="/public", file="index.html")

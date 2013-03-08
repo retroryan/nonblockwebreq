@@ -1,6 +1,7 @@
 package controllers;
 
 import models.TestParams;
+import play.Logger;
 import play.api.mvc.Call;
 import play.data.Form;
 import play.libs.F;
@@ -49,9 +50,12 @@ public class PauseJavaApplication extends Controller {
             return badRequest("Bad test params");
         }
         TestParams testParams = filledTestParams.get();
+        System.out.println("testParams = " + testParams.pauseDuration);
+        System.out.println("testParams = " + testParams.host);
 
         Call pauseCall = routes.PausingJavaController.pause(testParams.pauseDuration);
         String url = "http://" + testParams.host + pauseCall.url();
+        Logger.debug("url = " + url);
 
         return getPartialAsyncResult(url);
     }

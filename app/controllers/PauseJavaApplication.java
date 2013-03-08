@@ -49,15 +49,17 @@ public class PauseJavaApplication extends Controller {
         if (filledTestParams.hasErrors()) {
             return badRequest("Bad test params");
         }
-        TestParams testParams = filledTestParams.get();
-        System.out.println("testParams = " + testParams.pauseDuration);
-        System.out.println("testParams = " + testParams.host);
 
-        Call pauseCall = routes.PausingJavaController.pause(testParams.pauseDuration);
-        String url = "http://" + testParams.host + pauseCall.url();
-        Logger.debug("url = " + url);
+        // get from test params does not work in Play 2.0.4 ?
+        // TestParams testParams = filledTestParams.get();
+        String pauseDuration = filledTestParams.field("pauseDuration").value();
+        String host = filledTestParams.field("host").value();
 
-        return getPartialAsyncResult(url);
+        Call pauseCall = routes.PausingJavaController.pause(Integer.parseInt(pauseDuration));
+        String url = "http://" + host + pauseCall.url();
+        Logger.debug("URL: " + url);
+
+        return getPartialAsyncResult(pauseDuration, url);
     }
 
     // this handler occupies a thread until completed
@@ -68,26 +70,31 @@ public class PauseJavaApplication extends Controller {
         if (filledTestParams.hasErrors()) {
             return badRequest("Bad test params");
         }
-        TestParams testParams = filledTestParams.get();
 
-        Call pauseCall = routes.PausingController.pause(testParams.pauseDuration);
-        String url = "http://" + testParams.host + pauseCall.url();
+        // get from test params does not work in Play 2.0.4 ?
+        // TestParams testParams = filledTestParams.get();
+        String pauseDuration = filledTestParams.field("pauseDuration").value();
+        String host = filledTestParams.field("host").value();
 
-        return getPartialAsyncResult(url);
+        Call pauseCall = routes.PausingController.pause(Integer.parseInt(pauseDuration));
+        String url = "http://" + host + pauseCall.url();
+        Logger.debug("URL: " + url);
+
+        return getPartialAsyncResult(pauseDuration, url);
     }
 
 
-    private static Result getPartialAsyncResult(String url) {
+    private static Result getPartialAsyncResult(String pauseDuration, String url) {
         F.Promise<WS.Response> threePromise = WS.url(url)
-                .setQueryParameter("duration", "3")
+                .setQueryParameter(pauseDuration, "1")
                 .get(); // schedule now
 
         F.Promise<WS.Response> onePromise = WS.url(url)
-                .setQueryParameter("duration", "1")
+                .setQueryParameter(pauseDuration, "1")
                 .get(); // schedule now
 
         F.Promise<WS.Response> fourPromise = WS.url(url)
-                .setQueryParameter("duration", "4")
+                .setQueryParameter(pauseDuration, "4")
                 .get(); // schedule now
 
         // order doesn't matter
@@ -104,50 +111,84 @@ public class PauseJavaApplication extends Controller {
 
     // this handler only occupies a thread when active
     // three web requests run in parallel, when active the occupy a thread
-    public static Result fullAsync() {
+    public static Result fullAsyncJava() {
         Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
         if (filledTestParams.hasErrors()) {
             return badRequest("Bad test params");
         }
-        TestParams testParams = filledTestParams.get();
+        // get from test params does not work in Play 2.0.4 ?
+        // TestParams testParams = filledTestParams.get();
+        String pauseDuration = filledTestParams.field("pauseDuration").value();
+        String host = filledTestParams.field("host").value();
 
-        String pauseCall = routes.PausingJavaController.pause(3).absoluteURL(request());
+        Call pauseCall = routes.PausingController.pause(Integer.parseInt(pauseDuration));
+        String url = "http://" + host + pauseCall.url();
+        Logger.debug("URL: " + url);
 
-        final F.Promise<WS.Response> threePromise = WS.url(pauseCall)
-                .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
+        return getAsyncResults(pauseDuration, url);
+    }
+
+    // this handler only occupies a thread when active
+    // three web requests run in parallel, when active the occupy a thread
+    public static Result fullAsyncScala() {
+        Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
+        if (filledTestParams.hasErrors()) {
+            return badRequest("Bad test params");
+        }
+        // get from test params does not work in Play 2.0.4 ?
+        // TestParams testParams = filledTestParams.get();
+        String pauseDuration = filledTestParams.field("pauseDuration").value();
+        String host = filledTestParams.field("host").value();
+
+        Call pauseCall = routes.PausingController.pause(Integer.parseInt(pauseDuration));
+        String url = "http://" + host + pauseCall.url();
+        Logger.debug("URL: " + url);
+
+        return getAsyncResults(pauseDuration, url);
+    }
+
+    private static Result getAsyncResults(String pauseDuration, String url) {
+        final F.Promise<WS.Response> threePromise = WS.url(url)
+                .setQueryParameter("duration", String.valueOf(pauseDuration))
                 .get(); // schedule now
-        final F.Promise<WS.Response> onePromise = WS.url(pauseCall)
-                .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
+
+        final F.Promise<WS.Response> onePromise = WS.url(url)
+                .setQueryParameter("duration", String.valueOf(pauseDuration))
                 .get(); // schedule now
-        final F.Promise<WS.Response> fourPromise = WS.url(pauseCall)
-                .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
+
+        final F.Promise<WS.Response> fourPromise = WS.url(url)
+                .setQueryParameter("duration", String.valueOf(pauseDuration))
                 .get(); // schedule now
 
         return async(
-                threePromise.flatMap(
-                        new F.Function<WS.Response, F.Promise<Result>>() {
-                            public F.Promise<Result> apply(final WS.Response threeResponse) {
-                                return onePromise.flatMap(
-                                        new F.Function<WS.Response, F.Promise<Result>>() {
-                                            public F.Promise<Result> apply(final WS.Response oneResponse) {
-                                                return fourPromise.map(
-                                                        new F.Function<WS.Response, Result>() {
-                                                            public Result apply(final WS.Response fourResponse) {
-                                                                return ok(oneResponse.getBody() + threeResponse.getBody() + fourResponse.getBody());
-                                                            }
-                                                        }
-                                                );
-                                            }
-                                        }
-                                );
-                            }
-                        }
+                composePromises(threePromise, onePromise, fourPromise)
+        );
+    }
+
+    private static F.Promise<Result> composePromises(F.Promise<WS.Response> threePromise, final F.Promise<WS.Response> onePromise, final F.Promise<WS.Response> fourPromise) {
+        return threePromise.flatMap(
+                new F.Function<WS.Response, F.Promise<Result>>() {
+                    public F.Promise<Result> apply(final WS.Response threeResponse) {
+                        return onePromise.flatMap(
+                                new F.Function<WS.Response, F.Promise<Result>>() {
+                                    public F.Promise<Result> apply(final WS.Response oneResponse) {
+                                        return fourPromise.map(
+                                                new F.Function<WS.Response, Result>() {
+                                                    public Result apply(final WS.Response fourResponse) {
+
+                                                        String content = oneResponse.getBody() + threeResponse.getBody() + fourResponse.getBody();
+                                                        Logger.info("content = " + content);
+                                                        return ok(content);
+                                                    }
+                                                }
+                                        );
+                                    }
+                                }
+                        );
+                    }
+                }
 
 
-                )
         );
     }
 

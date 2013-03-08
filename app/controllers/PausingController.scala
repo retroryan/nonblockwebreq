@@ -1,9 +1,8 @@
 package controllers
 
 import play.api.mvc._
-// import scala.concurrent.ExecutionContext.Implicits.global
-// import scala.concurrent.duration._
-import play.api.Play.current
+import java.util.concurrent.TimeUnit
+
 import play.api.libs.concurrent.Promise
 import play.Logger
 
@@ -11,9 +10,9 @@ object PausingController extends Controller {
 
   def pause(duration: Int) = Action {
     Async {
-      Logger.debug("scala pausing for " + duration)
+      Logger.info("scala pausing for " + duration*1000)
 
-      Promise.timeout(Ok(duration.toString), duration*1000)
+      Promise.timeout(Ok(duration.toString), duration, TimeUnit.SECONDS)
     }
   }
 

@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 public class PausingJavaController extends Controller {
 
-    public static Result pause(final long duration) {
-        Logger.debug("java pausing for  " + duration + " seconds");
+    public static Result pause(final int duration) {
+        Logger.info("java pausing for  " + duration + " seconds");
 
         Callable<Result> callable = new Callable<Result>() {
             public Result call() {
@@ -23,7 +23,7 @@ public class PausingJavaController extends Controller {
             }
         };
 
-        F.Promise<Result> promiseOfInt = Akka.timeout(callable,duration, TimeUnit.SECONDS);
+        F.Promise<Result> promiseOfInt = Akka.timeout(callable, Long.valueOf(duration), TimeUnit.SECONDS);
 
         return async(promiseOfInt);
     }

@@ -57,7 +57,7 @@ public class PauseJavaApplication extends Controller {
         String url = "http://" + host + pauseCall.url();
         Logger.debug("THE URL: " + url);
 
-        return ok(WSUtils.getPartialAsyncResult(pauseDuration, url));
+        return ok(getPartialAsyncResult(pauseDuration, url));
     }
 
     // this handler occupies a thread until completed
@@ -78,7 +78,31 @@ public class PauseJavaApplication extends Controller {
         String url = "http://" + host + pauseCall.url();
         Logger.debug("URL: " + url);
 
-        return ok(WSUtils.getPartialAsyncResult(pauseDuration, url));
+        return ok(getPartialAsyncResult(pauseDuration, url));
+    }
+
+    public static String getPartialAsyncResult(String pauseDuration, String url) {
+        F.Promise<WS.Response> threePromise = WS.url(url)
+                .setQueryParameter("duration", pauseDuration)
+                .get(); // schedule now
+
+        F.Promise<WS.Response> onePromise = WS.url(url)
+                .setQueryParameter("duration", pauseDuration)
+                .get(); // schedule now
+
+        F.Promise<WS.Response> fourPromise = WS.url(url)
+                .setQueryParameter("duration", pauseDuration)
+                .get(); // schedule now
+
+        // order doesn't matter
+        String three = threePromise.get().getBody();
+        String one = onePromise.get().getBody();
+        String four = fourPromise.get().getBody();
+
+        String content = one + three + four;
+        //Logger.debug("content = " + content);
+
+        return content;
     }
 
     // this handler only occupies a thread when active
@@ -164,9 +188,11 @@ public class PauseJavaApplication extends Controller {
     }
 
     private static String nrActorInstances = play.Play.application().configuration().getString("ws.number.actorinstances");
+
+    //SmallestMailboxRouter
     private static ActorRef wsActorRouter = Akka.system()
             .actorOf(new Props(WSRequestActor.class)
-            .withRouter(new RoundRobinRouter(Integer.parseInt(nrActorInstances))));
+                    .withRouter(new RoundRobinRouter(Integer.parseInt(nrActorInstances))));
 
     public static Result actorRequest() {
         Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
@@ -179,11 +205,11 @@ public class PauseJavaApplication extends Controller {
         int duration = Integer.parseInt(pauseDuration);
         String host = filledTestParams.field("host").value();
 
-        TestParams testParams  = new TestParams(duration, 0, host);
+        TestParams testParams = new TestParams(duration, 0, host);
         //ActorRef wsReqActor = Akka.system().actorOf(new Props(WSRequestActor.class));
 
-        Logger.info("invoking actor router with " + nrActorInstances);
-        Logger.info("invoking actor router " + wsActorRouter.toString());
+        //Logger.info("invoking actor router with " + nrActorInstances);
+        //Logger.info("invoking actor router " + wsActorRouter.toString());
 
         return async(
                 Akka.asPromise(ask(wsActorRouter, testParams, 5000)).map(

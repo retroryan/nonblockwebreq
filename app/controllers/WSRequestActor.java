@@ -15,19 +15,16 @@ public class WSRequestActor extends UntypedActor {
             TestParams testParams = (TestParams) message;
             Call pauseCall = routes.PausingJavaController.pause(testParams.pauseDuration);
             String url = "http://" + testParams.host + pauseCall.url();
-            Logger.info("URL: " + url);
+           // Logger.info("URL: " + url);
 
-            //execute the WS request as a fulling blocking call.
-/*
+            //execute the WS request as a fulling blocking call,
+            // since an actor is already in a separate thread.
             String result = WS.url(url)
                     .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
                     .get().get().getBody();
-*/
 
-            String result = WSUtils.getPartialAsyncResult(String.valueOf(testParams.pauseDuration), url);
 
             Logger.info("finished ws call with result of : " + result);
-
             getSender().tell(" actor return msg: " + result);
 
         }

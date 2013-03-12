@@ -5,6 +5,8 @@
 GET     /scala/pause                    controllers.PausingController.pause(duration: Int)
 GET     /pause                          controllers.PausingJavaController.pause(duration: Int)
 
+POST     /java/actorRequest              controllers.PauseJavaApplication.actorRequest()
+
 GET     /java/sync                      controllers.PauseJavaApplication.sync()
 
 POST     /java/async/partialJava        controllers.PauseJavaApplication.partialAsyncJavaPause()

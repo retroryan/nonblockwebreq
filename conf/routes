@@ -2,7 +2,6 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /scala/pause                    controllers.PausingController.pause(duration: Int)
 GET     /pause                          controllers.PausingJavaController.pause(duration: Int)
 
 POST     /java/actorRequest              controllers.PauseJavaApplication.actorRequest()
@@ -10,12 +9,9 @@ POST     /java/actorRequest              controllers.PauseJavaApplication.actorR
 GET     /java/sync                      controllers.PauseJavaApplication.sync()
 
 POST     /java/async/partialJava        controllers.PauseJavaApplication.partialAsyncJavaPause()
-POST     /java/async/partialScala       controllers.PauseJavaApplication.partialAsyncScalaPause()
 
 POST     /java/async/fullJava            controllers.PauseJavaApplication.fullAsyncJava()
-POST     /java/async/fullScala           controllers.PauseJavaApplication.fullAsyncScala()
 
-GET     /java/social                    controllers.SocialJavaApplication.social()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /                               controllers.Assets.at(path="/public", file="index.html")

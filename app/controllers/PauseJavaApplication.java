@@ -3,6 +3,7 @@ package controllers;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinRouter;
+import akka.routing.SmallestMailboxRouter;
 import models.TestParams;
 import play.Logger;
 import play.Play;
@@ -57,31 +58,6 @@ public class PauseJavaApplication extends Controller {
         String url = "http://" + host + pauseCall.url();
         Logger.debug("THE URL: " + url);
 
-        return ok(getPartialAsyncResult(pauseDuration, url));
-    }
-
-    // this handler occupies a thread until completed
-    // three web requests run in parallel, when active they occupy a thread
-    public static Result partialAsyncScalaPause() {
-
-        Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
-        if (filledTestParams.hasErrors()) {
-            return badRequest("Bad test params");
-        }
-
-        // get from test params does not work in Play 2.0.4 ?
-        // TestParams testParams = filledTestParams.get();
-        String pauseDuration = filledTestParams.field("pauseDuration").value();
-        String host = filledTestParams.field("host").value();
-
-        Call pauseCall = routes.PausingController.pause(Integer.parseInt(pauseDuration));
-        String url = "http://" + host + pauseCall.url();
-        Logger.debug("URL: " + url);
-
-        return ok(getPartialAsyncResult(pauseDuration, url));
-    }
-
-    public static String getPartialAsyncResult(String pauseDuration, String url) {
         F.Promise<WS.Response> threePromise = WS.url(url)
                 .setQueryParameter("duration", pauseDuration)
                 .get(); // schedule now
@@ -102,7 +78,7 @@ public class PauseJavaApplication extends Controller {
         String content = one + three + four;
         //Logger.debug("content = " + content);
 
-        return content;
+        return ok(content);
     }
 
     // this handler only occupies a thread when active
@@ -117,33 +93,10 @@ public class PauseJavaApplication extends Controller {
         String pauseDuration = filledTestParams.field("pauseDuration").value();
         String host = filledTestParams.field("host").value();
 
-        Call pauseCall = routes.PausingController.pause(Integer.parseInt(pauseDuration));
+        Call pauseCall = routes.PausingJavaController.pause(Integer.parseInt(pauseDuration));
         String url = "http://" + host + pauseCall.url();
         Logger.debug("URL: " + url);
 
-        return getAsyncResults(pauseDuration, url);
-    }
-
-    // this handler only occupies a thread when active
-    // three web requests run in parallel, when active the occupy a thread
-    public static Result fullAsyncScala() {
-        Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
-        if (filledTestParams.hasErrors()) {
-            return badRequest("Bad test params");
-        }
-        // get from test params does not work in Play 2.0.4 ?
-        // TestParams testParams = filledTestParams.get();
-        String pauseDuration = filledTestParams.field("pauseDuration").value();
-        String host = filledTestParams.field("host").value();
-
-        Call pauseCall = routes.PausingController.pause(Integer.parseInt(pauseDuration));
-        String url = "http://" + host + pauseCall.url();
-        Logger.debug("URL: " + url);
-
-        return getAsyncResults(pauseDuration, url);
-    }
-
-    private static Result getAsyncResults(String pauseDuration, String url) {
         final F.Promise<WS.Response> threePromise = WS.url(url)
                 .setQueryParameter("duration", pauseDuration)
                 .get(); // schedule now
@@ -182,17 +135,16 @@ public class PauseJavaApplication extends Controller {
                         );
                     }
                 }
-
-
         );
     }
 
     private static String nrActorInstances = play.Play.application().configuration().getString("ws.number.actorinstances");
 
-    //SmallestMailboxRouter
+    //SmallestMailboxRouter    RoundRobinRouter
     private static ActorRef wsActorRouter = Akka.system()
             .actorOf(new Props(WSRequestActor.class)
-                    .withRouter(new RoundRobinRouter(Integer.parseInt(nrActorInstances))));
+            .withRouter(new SmallestMailboxRouter(Integer.parseInt(nrActorInstances)))
+            .withDispatcher("my-balancing-dispatcher"));
 
     public static Result actorRequest() {
         Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
@@ -208,8 +160,6 @@ public class PauseJavaApplication extends Controller {
         TestParams testParams = new TestParams(duration, 0, host);
         //ActorRef wsReqActor = Akka.system().actorOf(new Props(WSRequestActor.class));
 
-        //Logger.info("invoking actor router with " + nrActorInstances);
-        //Logger.info("invoking actor router " + wsActorRouter.toString());
 
         return async(
                 Akka.asPromise(ask(wsActorRouter, testParams, 5000)).map(

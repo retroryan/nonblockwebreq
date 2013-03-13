@@ -14,6 +14,9 @@ import play.libs.F;
 import play.libs.WS;
 import play.mvc.Controller;
 import play.mvc.Result;
+import play.mvc.Security;
+
+import java.util.List;
 
 import static akka.pattern.Patterns.ask;
 
@@ -109,32 +112,20 @@ public class PauseJavaApplication extends Controller {
                 .setQueryParameter("duration", pauseDuration)
                 .get(); // schedule now
 
-        return async(
-                composePromises(threePromise, onePromise, fourPromise)
-        );
-    }
+        F.Promise<List<WS.Response>> listPromise = F.Promise.waitAll(threePromise, onePromise, fourPromise);
 
-    private static F.Promise<Result> composePromises(F.Promise<WS.Response> threePromise, final F.Promise<WS.Response> onePromise, final F.Promise<WS.Response> fourPromise) {
-        return threePromise.flatMap(
-                new F.Function<WS.Response, F.Promise<Result>>() {
-                    public F.Promise<Result> apply(final WS.Response threeResponse) {
-                        return onePromise.flatMap(
-                                new F.Function<WS.Response, F.Promise<Result>>() {
-                                    public F.Promise<Result> apply(final WS.Response oneResponse) {
-                                        return fourPromise.map(
-                                                new F.Function<WS.Response, Result>() {
-                                                    public Result apply(final WS.Response fourResponse) {
-                                                        String content = oneResponse.getBody() + threeResponse.getBody() + fourResponse.getBody();
-                                                        Logger.info("content = " + content);
-                                                        return ok(content);
-                                                    }
-                                                }
-                                        );
-                                    }
-                                }
-                        );
+        return async(
+                listPromise.map(new F.Function<List<WS.Response>, Result>() {
+                    @Override
+                    public Result apply(List<WS.Response> responses) throws Throwable {
+                        StringBuilder content = new StringBuilder();
+                        for (WS.Response response : responses) {
+                            content.append(response);
+                        }
+                        return ok(content.toString());
                     }
                 }
+                )
         );
     }
 
@@ -143,9 +134,10 @@ public class PauseJavaApplication extends Controller {
     //SmallestMailboxRouter    RoundRobinRouter
     private static ActorRef wsActorRouter = Akka.system()
             .actorOf(new Props(WSRequestActor.class)
-            .withRouter(new SmallestMailboxRouter(Integer.parseInt(nrActorInstances)))
-            .withDispatcher("my-balancing-dispatcher"));
+                    .withRouter(new SmallestMailboxRouter(Integer.parseInt(nrActorInstances)))
+                    .withDispatcher("my-balancing-dispatcher"));
 
+    @Security.Authenticated
     public static Result actorRequest() {
         Form<TestParams> filledTestParams = testParamsForm.bindFromRequest();
         if (filledTestParams.hasErrors()) {

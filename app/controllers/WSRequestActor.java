@@ -19,15 +19,14 @@ public class WSRequestActor extends UntypedActor {
 
             //execute the WS request as a fulling blocking call,
             // since an actor is already in a separate thread.
-/*
             String result = WS.url(url)
                     .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
                     .get().get().getBody();
-*/
 
 
-            Logger.info("finished ws call with result of : " + 1);
-            getSender().tell(" actor return msg: " + 1);
+
+            Logger.info("finished ws call with result of : " + result);
+            getSender().tell(" actor return msg: " + result);
 
         }
     }

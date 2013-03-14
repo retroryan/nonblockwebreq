@@ -17,9 +17,9 @@ public class PausingJavaController extends Controller {
     public static Result pause(final int duration) {
         Logger.info("java pausing for  " + duration + " seconds");
 
-        Callable<Result> callable = new Callable<Result>() {
-            public Result call() {
-                return ok(String.valueOf(duration));
+        Callable<Result> callable = new Callable<Result>(){
+            public Result call()  throws Exception {
+                return ok("paused for " + String.valueOf(duration));
             }
         };
 

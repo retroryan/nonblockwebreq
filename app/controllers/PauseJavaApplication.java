@@ -17,12 +17,53 @@ import play.mvc.Result;
 import play.mvc.Security;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static akka.pattern.Patterns.ask;
 
 public class PauseJavaApplication extends Controller {
 
     final static Form<TestParams> testParamsForm = form(TestParams.class);
+
+
+    public static Result testPromise() {
+
+        F.Promise<String> integerPromise = Akka.future(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+                //if (1 == 2)
+               //     throw new Exception("opps!");
+
+                Call pauseCall = routes.PausingJavaController.pause(1);
+                String url = "http://" + "localhost:9000" + pauseCall.url();
+
+                String wsResults = WS.url(url)
+                        .setQueryParameter("duration", String.valueOf(1))
+                        .get().get().getBody(); // block here
+
+                return wsResults;
+            }
+        });
+
+        F.Function<String, Result> onSuccess = new F.Function<String, Result>() {
+            @Override
+            public Result apply(String wsResults) throws Throwable {
+                return ok(wsResults);
+            }
+        };
+
+        F.Function<Throwable, Result> onError = new F.Function<Throwable, Result>() {
+            @Override
+            public Result apply(Throwable throwable) throws Throwable {
+                return ok(throwable.toString());
+            }
+        };
+        return async(
+                integerPromise
+                        .map(onSuccess)
+                        .recover(onError)
+        );
+    }
 
     // this handler occupies a thread until completed
     // three web requests run in sequence, each uses an additional thread (using only one additional thread at a time
@@ -134,7 +175,7 @@ public class PauseJavaApplication extends Controller {
     //SmallestMailboxRouter    RoundRobinRouter
     private static ActorRef wsActorRouter = Akka.system()
             .actorOf(new Props(WSRequestActor.class)
-                    .withRouter(new SmallestMailboxRouter(Integer.parseInt(nrActorInstances)))
+                    .withRouter(new RoundRobinRouter(Integer.parseInt(nrActorInstances)))
                     .withDispatcher("my-balancing-dispatcher"));
 
     @Security.Authenticated

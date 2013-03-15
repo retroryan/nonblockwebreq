@@ -116,7 +116,7 @@ public class PauseJavaApplication extends Controller {
         TestParams testParams = filledTestParams.get();
 
         String pauseCall = routes.PausingJavaController.pause(3).absoluteURL(request());
-/*
+
         final F.Promise<WS.Response> threePromise = WS.url(pauseCall)
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
                 .get(); // schedule now
@@ -142,9 +142,6 @@ public class PauseJavaApplication extends Controller {
                 }
                 )
         );
-        */
-
-        return ok("HI");
     }
 
 

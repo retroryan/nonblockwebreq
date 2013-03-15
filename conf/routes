@@ -10,7 +10,7 @@ GET     /java/sync                      controllers.PauseJavaApplication.sync()
 POST     /java/async/partialJava        controllers.PauseJavaApplication.partialAsyncJavaPause()
 POST     /java/async/partialScala       controllers.PauseJavaApplication.partialAsyncScalaPause()
 
-GET     /java/async/full                controllers.PauseJavaApplication.fullAsync()
+POST     /java/async/full                controllers.PauseJavaApplication.fullAsync()
 
 GET     /scala/sync                     controllers.PauseScalaApplication.sync()
 GET     /scala/async/partial            controllers.PauseScalaApplication.partialAsync()

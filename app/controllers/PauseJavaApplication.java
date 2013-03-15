@@ -116,43 +116,35 @@ public class PauseJavaApplication extends Controller {
         TestParams testParams = filledTestParams.get();
 
         String pauseCall = routes.PausingJavaController.pause(3).absoluteURL(request());
-
+/*
         final F.Promise<WS.Response> threePromise = WS.url(pauseCall)
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
                 .get(); // schedule now
         final F.Promise<WS.Response> onePromise = WS.url(pauseCall)
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
                 .get(); // schedule now
         final F.Promise<WS.Response> fourPromise = WS.url(pauseCall)
                 .setQueryParameter("duration", String.valueOf(testParams.pauseDuration))
-                .setQueryParameter("memoryFillSize", String.valueOf(testParams.memoryFillSize))
                 .get(); // schedule now
 
+        F.Promise<List<WS.Response>> listPromise = F.Promise.sequence(threePromise, onePromise, fourPromise);
+
         return async(
-                threePromise.flatMap(
-                        new F.Function<WS.Response, F.Promise<Result>>() {
-                            public F.Promise<Result> apply(final WS.Response threeResponse) {
-                                return onePromise.flatMap(
-                                        new F.Function<WS.Response, F.Promise<Result>>() {
-                                            public F.Promise<Result> apply(final WS.Response oneResponse) {
-                                                return fourPromise.map(
-                                                        new F.Function<WS.Response, Result>() {
-                                                            public Result apply(final WS.Response fourResponse) {
-                                                                return ok(oneResponse.getBody() + threeResponse.getBody() + fourResponse.getBody());
-                                                            }
-                                                        }
-                                                );
-                                            }
-                                        }
-                                );
-                            }
+                listPromise.map(new F.Function<List<WS.Response>, Result>() {
+                    @Override
+                    public Result apply(List<WS.Response> responses) throws Throwable {
+                        StringBuilder content = new StringBuilder();
+                        for (WS.Response response : responses) {
+                            content.append(response);
                         }
-
-
+                        return ok(content.toString());
+                    }
+                }
                 )
         );
+        */
+
+        return ok("HI");
     }
 
 
